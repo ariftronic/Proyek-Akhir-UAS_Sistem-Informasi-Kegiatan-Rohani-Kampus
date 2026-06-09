@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="SIKRK - Sistem Informasi Kegiatan Rohani Kampus. Platform digital untuk mengelola kegiatan kerohanian di lingkungan kampus."
+    />
+    <meta
+      name="keywords"
+      content="SIKRK, kegiatan rohani, kampus, kerohanian, organisasi rohani"
+    />
+    <meta name="author" content="SIKRK Team" />
+    <title>SIKRK — Sistem Informasi Kegiatan Rohani Kampus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Amiri:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- ===== PRELOADER ===== -->
+    <div id="preloader" class="preloader">
+      <div class="preloader-inner">
+        <div class="preloader-icon">☪✝☸</div>
+        <div class="preloader-text">SIKRK</div>
+        <div class="preloader-bar"><div class="preloader-bar-fill"></div></div>
+      </div>
+    </div>
+
+    <!-- ===== TOP NAVIGATION ===== -->
+    <nav id="main-nav" class="main-nav">
+      <div class="nav-container">
+        <a href="#" class="nav-logo" data-page="beranda">
+          <span class="logo-icon">🕌</span>
+          <span class="logo-text">SIKRK</span>
+        </a>
+
+        <button
+          id="nav-toggle"
+          class="nav-toggle"
+          aria-label="Toggle Navigation"
+        >
+          <span></span><span></span><span></span>
+        </button>
+
+        <ul id="nav-menu" class="nav-menu">
+          <li>
+            <a href="#" class="nav-link active" data-page="beranda">Beranda</a>
+          </li>
+          <li class="nav-dropdown">
+            <a href="#" class="nav-link" data-page="profil-organisasi"
+              >Profil Organisasi</a
+            >
+            <ul class="dropdown-menu">
+              <li>
+                <a href="#" data-page="sejarah-struktur">Sejarah & Struktur</a>
+              </li>
+              <li>
+                <a href="#" data-page="profil-pengurus">Profil Pengurus</a>
+              </li>
+            </ul>
+          </li>
+          <li class="nav-dropdown">
+            <a href="#" class="nav-link" data-page="jadwal-kegiatan"
+              >Jadwal Kegiatan</a
+            >
+            <ul class="dropdown-menu">
+              <li>
+                <a href="#" data-page="detail-kegiatan">Detail Kegiatan</a>
+              </li>
+              <li>
+                <a href="#" data-page="pendaftaran-kegiatan"
+                  >Pendaftaran Kegiatan</a
+                >
+              </li>
+            </ul>
+          </li>
+          <li class="nav-dropdown">
+            <a href="#" class="nav-link" data-page="galeri-dokumentasi"
+              >Galeri & Dokumentasi</a
+            >
+            <ul class="dropdown-menu">
+              <li><a href="#" data-page="album-foto">Album Foto</a></li>
+              <li>
+                <a href="#" data-page="unggah-dokumentasi"
+                  >Unggah Dokumentasi</a
+                >
+              </li>
+            </ul>
+          </li>
+          <li class="nav-dropdown">
+            <a href="#" class="nav-link">Lainnya</a>
+            <ul class="dropdown-menu">
+              <li><a href="#" data-page="artikel-rohani">Artikel Rohani</a></li>
+              <li>
+                <a href="#" data-page="laporan-kegiatan">Laporan Kegiatan</a>
+              </li>
+              <li>
+                <a href="#" data-page="dashboard-peserta">Dashboard Peserta</a>
+              </li>
+              <li>
+                <a href="#" data-page="pengaturan-akun">Pengaturan Akun</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- ===== BREADCRUMB ===== -->
+    <div id="breadcrumb-bar" class="breadcrumb-bar" style="display: none">
+      <div class="container">
+        <nav id="breadcrumb" class="breadcrumb" aria-label="Breadcrumb"></nav>
+      </div>
+    </div>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main id="app-content" class="app-content">
+      <!-- Content will be dynamically injected by JavaScript -->
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="main-footer">
+      <div class="footer-wave">
+        <svg viewBox="0 0 1440 100" preserveAspectRatio="none">
+          <path
+            d="M0,40 C360,100 720,0 1080,60 C1260,90 1380,50 1440,40 L1440,100 L0,100 Z"
+            fill="currentColor"
+          />
+        </svg>
+      </div>
+      <div class="footer-content">
+        <div class="container">
+          <div class="footer-grid">
+            <div class="footer-col">
+              <h3><span class="logo-icon">🕌</span> SIKRK</h3>
+              <p>
+                Sistem Informasi Kegiatan Rohani Kampus — Mewujudkan kehidupan
+                kampus yang bermoral dan beriman melalui teknologi informasi.
+              </p>
+            </div>
+            <div class="footer-col">
+              <h4>Navigasi Cepat</h4>
+              <ul>
+                <li><a href="#" data-page="beranda">Beranda</a></li>
+                <li>
+                  <a href="#" data-page="profil-organisasi"
+                    >Profil Organisasi</a
+                  >
+                </li>
+                <li>
+                  <a href="#" data-page="jadwal-kegiatan">Jadwal Kegiatan</a>
+                </li>
+                <li>
+                  <a href="#" data-page="galeri-dokumentasi"
+                    >Galeri & Dokumentasi</a
+                  >
+                </li>
+              </ul>
+            </div>
+            <div class="footer-col">
+              <h4>Layanan</h4>
+              <ul>
+                <li>
+                  <a href="#" data-page="pendaftaran-kegiatan"
+                    >Pendaftaran Kegiatan</a
+                  >
+                </li>
+                <li>
+                  <a href="#" data-page="artikel-rohani">Artikel Rohani</a>
+                </li>
+                <li>
+                  <a href="#" data-page="laporan-kegiatan">Laporan Kegiatan</a>
+                </li>
+                <li>
+                  <a href="#" data-page="kebijakan-bantuan"
+                    >Kebijakan & Bantuan</a
+                  >
+                </li>
+              </ul>
+            </div>
+            <div class="footer-col">
+              <h4>Kontak</h4>
+              <p>
+                📍 Jl. Kampus Rohani No. 1<br />📧 info@sikrk.ac.id<br />📞
+                (021) 1234-5678
+              </p>
+              <div class="footer-socials">
+                <a href="#" aria-label="Instagram">📷</a>
+                <a href="#" aria-label="YouTube">▶️</a>
+                <a href="#" aria-label="Facebook">📘</a>
+              </div>
+            </div>
+          </div>
+          <div class="footer-bottom">
+            <p>
+              &copy; 2026 SIKRK — Sistem Informasi Kegiatan Rohani Kampus.
+              Seluruh Hak Dilindungi.
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- ===== BACK TO TOP ===== -->
+    <button id="back-to-top" class="back-to-top" aria-label="Kembali ke Atas">
+      ↑
+    </button>
+
+    <script src="pages1.js"></script>
+    <script src="pages2.js"></script>
+    <script src="pages3.js"></script>
+    <script src="app.js"></script>
+    <script src="router.js"></script>
+  </body>
+</html>
