@@ -5,6 +5,7 @@ window.renderPage = function (pageId) {
     window.pages1 || {},
     window.pages2 || {},
     window.pages3 || {},
+    window.pagesAuth || {},
   );
   const renderer = allPages[pageId];
   if (renderer) return renderer();

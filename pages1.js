@@ -115,16 +115,28 @@ const pages1 = {
       </div>`,
     ),
 
-  "jadwal-kegiatan": () =>
-    pg(
+  "jadwal-kegiatan": () => {
+    const events = window.db.getKegiatan();
+    const rows = events.map(e => {
+      let badgeClass = "badge-success";
+      if (e.status === "Segera") badgeClass = "badge-warning";
+      if (e.status === "Pendaftaran") badgeClass = "badge-info";
+      if (e.status === "Penuh") badgeClass = "badge-danger";
+      
+      return `
+        <tr>
+          <td><strong>${e.name}</strong></td>
+          <td>${e.date}</td>
+          <td>${e.time} WIB</td>
+          <td>${e.location}</td>
+          <td><span class="badge ${badgeClass}">${e.status}</span></td>
+        </tr>
+      `;
+    }).join("");
+
+    return pg(
       "Jadwal Kegiatan",
       `
-      <div class="tabs">
-        <button class="tab-btn active" onclick="this.parentElement.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">Semua</button>
-        <button class="tab-btn" onclick="this.parentElement.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">Mingguan</button>
-        <button class="tab-btn" onclick="this.parentElement.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')">Bulanan</button>
-      </div>
-      
       <div class="table-wrap">
         <table>
           <thead>
@@ -137,41 +149,7 @@ const pages1 = {
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>Kajian Rutin Subuh</td>
-              <td>12 Jun 2026</td>
-              <td>05:00</td>
-              <td>Masjid Utama Kampus</td>
-              <td><span class="badge badge-success">Terbuka</span></td>
-            </tr>
-            <tr>
-              <td>Retreat Mahasiswa Baru</td>
-              <td>20 Jun 2026</td>
-              <td>08:00</td>
-              <td>Wisma Alam Asri</td>
-              <td><span class="badge badge-warning">Segera</span></td>
-            </tr>
-            <tr>
-              <td>Doa Bersama Masa Ujian</td>
-              <td>25 Jun 2026</td>
-              <td>16:00</td>
-              <td>Aula Rektorat</td>
-              <td><span class="badge badge-success">Terbuka</span></td>
-            </tr>
-            <tr>
-              <td>Bakti Sosial Panti Asuhan</td>
-              <td>1 Jul 2026</td>
-              <td>07:00</td>
-              <td>Panti Harapan Kita</td>
-              <td><span class="badge badge-info">Pendaftaran</span></td>
-            </tr>
-            <tr>
-              <td>Seminar Etika Digital</td>
-              <td>10 Jul 2026</td>
-              <td>09:00</td>
-              <td>Gedung F Lt.3</td>
-              <td><span class="badge badge-success">Terbuka</span></td>
-            </tr>
+            ${rows}
           </tbody>
         </table>
       </div>
@@ -188,7 +166,8 @@ const pages1 = {
           <a href="#" data-page="pendaftaran-kegiatan" class="btn btn-sm btn-primary">Daftar →</a>
         </div>
       </div>`,
-    ),
+    );
+  },
 
   "galeri-dokumentasi": () =>
     pg(

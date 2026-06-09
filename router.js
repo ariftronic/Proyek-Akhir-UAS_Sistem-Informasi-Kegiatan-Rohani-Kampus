@@ -116,6 +116,8 @@ const LAYER_MAP = {
     parent: "hak-akses",
     title: "Integrasi Sistem",
   },
+  login: { layer: 1, parent: null, title: "Masuk / Login" },
+  register: { layer: 1, parent: null, title: "Daftar Anggota" },
 };
 
 function getBreadcrumb(pageId) {
@@ -203,9 +205,18 @@ function initApp() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
-  // Mobile toggle
-  document.getElementById("nav-toggle").addEventListener("click", () => {
-    document.getElementById("nav-menu").classList.toggle("open");
+  // Initialize Auth navbar state
+  if (window.updateNavbarState) {
+    window.updateNavbarState();
+  }
+
+  // Mobile toggle with hamburger animation
+  const navToggle = document.getElementById("nav-toggle");
+  const navMenu = document.getElementById("nav-menu");
+  
+  navToggle.addEventListener("click", () => {
+    navToggle.classList.toggle("open");
+    navMenu.classList.toggle("open");
   });
 
   // Mobile dropdowns
@@ -223,7 +234,8 @@ function initApp() {
     el.addEventListener("click", (e) => {
       e.preventDefault();
       navigateTo(el.dataset.page);
-      document.getElementById("nav-menu").classList.remove("open");
+      navMenu.classList.remove("open");
+      navToggle.classList.remove("open");
     });
   });
 

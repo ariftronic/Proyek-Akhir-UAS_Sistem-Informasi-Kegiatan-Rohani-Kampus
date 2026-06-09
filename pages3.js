@@ -1,49 +1,132 @@
 /* Pages L7-L10 */
+window.submitComment = function(e, articleId) {
+  e.preventDefault();
+  const textInput = document.getElementById("comment-text-input");
+  const text = textInput.value.trim();
+  if (!text) return;
+  
+  const user = window.db.getCurrentUser();
+  if (!user) {
+    alert("Silakan login terlebih dahulu untuk menulis komentar.");
+    navigateTo("login");
+    return;
+  }
+
+  const res = window.db.addKomentar(articleId, text);
+  if (res.success) {
+    if (user.role === "admin") {
+      alert("Komentar berhasil dipublikasikan!");
+    } else {
+      alert("Komentar terkirim! Sedang dalam moderasi admin.");
+    }
+    textInput.value = "";
+    navigateTo("komentar-diskusi");
+  } else {
+    alert(res.message);
+  }
+};
+
+window.deleteComment = function(id) {
+  if (confirm("Apakah Anda yakin ingin menghapus komentar ini?")) {
+    window.db.deleteKomentar(id);
+    alert("Komentar telah dihapus.");
+    navigateTo("komentar-diskusi");
+  }
+};
+
+window.approveCommentAdmin = function(id) {
+  window.db.approveKomentar(id);
+  alert("Komentar disetujui!");
+  navigateTo("moderasi-komentar");
+};
+
+window.rejectCommentAdmin = function(id) {
+  window.db.deleteKomentar(id);
+  alert("Komentar ditolak.");
+  navigateTo("moderasi-komentar");
+};
+
+window.submitNewEventAdmin = function(e) {
+  e.preventDefault();
+  const name = document.getElementById("evt-name").value;
+  const date = document.getElementById("evt-date").value;
+  const time = document.getElementById("evt-time").value;
+  const location = document.getElementById("evt-location").value;
+  const quota = document.getElementById("evt-quota").value;
+
+  const newEvt = window.db.addKegiatan(name, date, time, location, quota);
+  if (newEvt) {
+    alert(`Kegiatan "${name}" berhasil ditambahkan ke database!`);
+    navigateTo("manajemen-data");
+  }
+};
+
+window.submitProfileUpdate = function(e) {
+  e.preventDefault();
+  const name = document.getElementById("profile-name").value;
+  const nim = document.getElementById("profile-nim").value;
+  const prodi = document.getElementById("profile-prodi").value;
+  const whatsapp = document.getElementById("profile-whatsapp").value;
+
+  const res = window.db.updateProfile(name, nim, prodi, whatsapp);
+  if (res.success) {
+    alert("Profil berhasil diperbarui!");
+    navigateTo("pengaturan-akun");
+    updateNavbarState();
+  } else {
+    alert(res.message);
+  }
+};
+
 const pages3 = {
-  "komentar-diskusi": () =>
-    pg(
+  "komentar-diskusi": () => {
+    const user = window.db.getCurrentUser();
+    const comments = window.db.getKomentar("menjemput-rahmat");
+    
+    const commentsList = comments.map(c => `
+      <div class="comment">
+        <div class="comment-avatar">👤</div>
+        <div class="comment-body" style="width: 100%;">
+          <div class="comment-meta" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <span><strong>${c.userName}</strong> · ${c.date}</span>
+            ${user && user.role === "admin" ? `<button class="btn btn-sm btn-outline" style="color:red; border-color:red; padding: 2px 8px; font-size:0.75rem;" onclick="deleteComment('${c.id}')">Hapus</button>` : ""}
+          </div>
+          <div class="comment-text" style="margin-top:4px;">${c.text}</div>
+        </div>
+      </div>
+    `).join("");
+
+    return pg(
       "Komentar & Diskusi",
       `
       <div class="card fade-in" style="margin-bottom:24px">
         <h3>💬 Topik: Menjemput Rahmat di Sepertiga Malam</h3>
         <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom: 20px;">Berbagi insight dan bertukar pandangan secara sehat.</p>
         
-        <div class="comment">
-          <div class="comment-avatar">👤</div>
-          <div class="comment-body">
-            <div class="comment-meta"><strong>Ahmad Rizki</strong> · 2 jam yang lalu</div>
-            <div class="comment-text">MasyaAllah, artikel yang sangat menampar. Kadang sibuk nugas sampai larut malam tapi malas sholat malam. Semoga kita semua dikaruniai keistiqomahan untuk rutin menjalankan tahajud.</div>
-          </div>
-        </div>
-        
-        <div class="comment">
-          <div class="comment-avatar">👤</div>
-          <div class="comment-body">
-            <div class="comment-meta"><strong>Siti Aisyah</strong> · 5 jam yang lalu</div>
-            <div class="comment-text">Terima kasih atas ilmunya Ustadz. Kalau boleh request materi, mohon dishare juga panduan adab dan urutan doa saat sholat tahajud yang disunnahkan untuk mahasiswa pemula.</div>
-          </div>
-        </div>
-        
-        <div class="comment">
-          <div class="comment-avatar">👤</div>
-          <div class="comment-body">
-            <div class="comment-meta"><strong>David Kurniawan</strong> · Kemarin</div>
-            <div class="comment-text">Izin bertanya, bagaimana tips praktis mengatur jam tidur untuk mahasiswa kosan agar tidak kebablasan alarm tahajud dan tetap segar kuliah pagi?</div>
-          </div>
+        <div id="comments-container">
+          ${commentsList || "<p style='color:var(--text-muted); text-align:center;'>Belum ada komentar disetujui.</p>"}
         </div>
       </div>
       
       <div class="card fade-in">
         <h3>✍️ Ikut Berdiskusi</h3>
-        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom: 12px;">Punya pertanyaan atau tanggapan? Silakan ketik di bawah.</p>
-        <div class="form-group">
-          <textarea class="form-control" placeholder="Tuliskan komentar, opini, atau pertanyaanmu dengan bahasa yang santun..."></textarea>
-        </div>
-        <button class="btn btn-primary" onclick="alert('Komentarmu sudah terkirim dan akan muncul setelah melalui filter sistem moderasi kami.')">Kirim Komentar</button>
+        ${user ? `
+          <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom: 12px;">Masuk sebagai: <strong>${user.name}</strong></p>
+          <form onsubmit="submitComment(event, 'menjemput-rahmat')">
+            <div class="form-group">
+              <textarea id="comment-text-input" class="form-control" placeholder="Tuliskan komentar, opini, atau pertanyaanmu dengan bahasa yang santun..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Kirim Komentar</button>
+          </form>
+        ` : `
+          <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom: 12px;">Anda harus login untuk ikut berdiskusi.</p>
+          <a href="#" data-page="login" class="btn btn-primary">Masuk untuk Berkomentar</a>
+        `}
       </div>
       <br>
-      <a href="#" data-page="moderasi-komentar" class="btn btn-outline">🛡️ (Khusus Admin) Panel Moderasi →</a>`,
-    ),
+      ${user && user.role === "admin" ? `<a href="#" data-page="moderasi-komentar" class="btn btn-outline">🛡️ Panel Moderasi Komentar →</a>` : ""}`,
+    );
+  },
 
   notifikasi: () =>
     pg(
@@ -136,13 +219,41 @@ const pages3 = {
       <a href="#" data-page="manajemen-data" class="btn btn-primary">🗄️ Menuju Pengelolaan Data Pokok →</a>`,
     ),
 
-  "moderasi-komentar": () =>
-    pg(
+  "moderasi-komentar": () => {
+    const user = window.db.getCurrentUser();
+    if (!user || user.role !== "admin") {
+      return pg("Akses Ditolak", `<div class="card fade-in"><p>Maaf, halaman ini hanya dapat diakses oleh Admin SIKRK.</p></div>`);
+    }
+
+    const allComments = window.db.getKomentar();
+    const queue = allComments.filter(c => c.status === "Menunggu");
+    
+    let tableRows = "";
+    if (queue.length === 0) {
+      tableRows = `<tr><td colspan="5" style="text-align:center;">Tidak ada komentar baru di antrean moderasi.</td></tr>`;
+    } else {
+      tableRows = queue.map(c => `
+        <tr>
+          <td><strong>${c.userName}</strong></td>
+          <td><span style="font-size:0.88rem;">"${c.text.substring(0, 45)}..."</span></td>
+          <td>${c.articleId}</td>
+          <td><span class="badge badge-warning">Menunggu</span></td>
+          <td>
+            <div style="display:flex; gap:5px;">
+              <button class="btn btn-sm btn-primary" onclick="approveCommentAdmin('${c.id}')">Terima ✓</button>
+              <button class="btn btn-sm btn-outline" style="color:red; border-color:red;" onclick="rejectCommentAdmin('${c.id}')">Tolak ✗</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    return pg(
       "Panel Moderasi",
       `
       <div class="card fade-in" style="margin-bottom:20px">
         <h3>🛡️ Antrean Peninjauan Komentar</h3>
-        <p style="color:var(--text-muted); font-size:0.9rem;">Tugas kita menjaga ruang diskusi tetap positif dan bebas spam.</p>
+        <p style="color:var(--text-muted); font-size:0.9rem;">Menyaring komentar dari anggota SIKRK secara real-time.</p>
       </div>
       <div class="table-wrap">
         <table>
@@ -156,172 +267,181 @@ const pages3 = {
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>Hasan (Fak. Teknik)</td>
-              <td>"Artikel yang sangat mencerahkan, izin..."</td>
-              <td>Sholat Tahajud</td>
-              <td><span class="badge badge-warning">Menunggu</span></td>
-              <td><button class="btn btn-sm btn-primary" onclick="alert('Komentar Hasan disetujui dan akan dipublikasikan.')">Terima ✓</button></td>
-            </tr>
-            <tr>
-              <td>[Akun Anonim]</td>
-              <td>"Coba bahas topik kontroversial tentang..."</td>
-              <td>Indahnya Hidup...</td>
-              <td><span class="badge badge-warning">Menunggu</span></td>
-              <td><button class="btn btn-sm btn-primary" onclick="alert('Komentar telah dihapus dari antrean.')">Tolak ✗</button></td>
-            </tr>
+            ${tableRows}
           </tbody>
         </table>
       </div>
       <br>
       <a href="#" data-page="log-aktivitas" class="btn btn-outline">📋 Pantau Log Sistem Keseluruhan →</a>`,
-    ),
+    );
+  },
 
-  "pengaturan-akun": () =>
-    pg(
+  "pengaturan-akun": () => {
+    const user = window.db.getCurrentUser();
+    if (!user) {
+      return pg("Pengaturan Akun", `<div class="card fade-in text-center"><p>Silakan login terlebih dahulu untuk mengakses pengaturan akun.</p><br><a href="#" data-page="login" class="btn btn-primary">Login</a></div>`);
+    }
+
+    return pg(
       "Pengaturan Akun",
       `
       <div class="card fade-in">
         <h3>⚙️ Profil Pengguna</h3>
         <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom: 20px;">Pastikan datamu selalu mutakhir agar sertifikat namamu tidak salah cetak.</p>
         
-        <div class="form-row">
-          <div class="form-group">
-            <label>Nama Lengkap (Ditampilkan di Sertifikat)</label>
-            <input class="form-control" value="Muhammad Rizki Amanullah">
+        <form onsubmit="submitProfileUpdate(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nama Lengkap (Ditampilkan di Sertifikat)</label>
+              <input id="profile-name" class="form-control" value="${user.name || ""}" required>
+            </div>
+            <div class="form-group">
+              <label>Alamat Email Institusi</label>
+              <input class="form-control" value="${user.email || ""}" disabled style="background:#e2e8f0; cursor:not-allowed;">
+            </div>
           </div>
-          <div class="form-group">
-            <label>Alamat Email Institusi</label>
-            <input class="form-control" value="m.rizki@student.kampus.ac.id">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nomor Telepon / WhatsApp Aktif</label>
+              <input id="profile-whatsapp" class="form-control" value="${user.whatsapp || ""}" required>
+            </div>
+            <div class="form-group">
+              <label>Asal Fakultas / Prodi</label>
+              <input id="profile-prodi" class="form-control" value="${user.prodi || ""}" required>
+            </div>
           </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Nomor Telepon / WhatsApp Aktif</label>
-            <input class="form-control" value="0812-3456-7890">
-          </div>
-          <div class="form-group">
-            <label>Asal Fakultas / Prodi</label>
-            <input class="form-control" value="Fak. Ilmu Agama / Pendidikan Agama Islam">
-          </div>
-        </div>
-        
-        <hr class="glow-line">
-        
-        <h3>🔔 Pengaturan Privasi & Notifikasi</h3>
-        <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom: 20px;">Atur informasi apa saja yang ingin kami kirimkan ke perangkatmu.</p>
-        
-        <div style="display:flex;flex-direction:column;gap:16px">
-          <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span>Kirimkan saya info pendaftaran acara baru</label>
-          <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span>Berikan alarm/pengingat H-1 sebelum acaraku dimulai</label>
-          <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span>Langganan buletin rohani edisi akhir pekan (Email)</label>
-        </div>
-        <br><br>
-        <button class="btn btn-primary" onclick="alert('Bagus! Preferensi akun terbarumu telah kami amankan.')">Simpan Perubahan</button>
+          <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Simpan Perubahan</button>
+        </form>
       </div>
       <br>
-      <a href="#" data-page="backup-restore" class="btn btn-outline">💾 (Khusus Admin) Cadangkan Data →</a>`,
-    ),
+      ${user.role === "admin" ? `<a href="#" data-page="backup-restore" class="btn btn-outline">💾 (Khusus Admin) Cadangkan Data →</a>` : ""}`,
+    );
+  },
 
-  "manajemen-data": () =>
-    pg(
+  "manajemen-data": () => {
+    const user = window.db.getCurrentUser();
+    if (!user || user.role !== "admin") {
+      return pg("Akses Ditolak", `<div class="card fade-in"><p>Maaf, halaman ini hanya dapat diakses oleh Admin SIKRK.</p></div>`);
+    }
+
+    const eventsCount = window.db.getKegiatan().length;
+    const usersCount = window.db.users.length;
+    const commentsCount = window.db.getKomentar().length;
+    const registrationsCount = window.db.getPendaftaran().length;
+
+    return pg(
       "Pusat Manajemen Data",
       `
       <div class="stats-row fade-in">
-        <div class="stat-card"><div class="stat-number">2.840</div><div class="stat-label">Baris Entri Aktif</div></div>
-        <div class="stat-card"><div class="stat-number">156 MB</div><div class="stat-label">Beban Storage Server</div></div>
-        <div class="stat-card"><div class="stat-number">99.8%</div><div class="stat-label">Kesehatan Database</div></div>
+        <div class="stat-card"><div class="stat-number">${eventsCount}</div><div class="stat-label">Total Kegiatan</div></div>
+        <div class="stat-card"><div class="stat-number">${registrationsCount}</div><div class="stat-label">Pendaftaran Masuk</div></div>
+        <div class="stat-card"><div class="stat-number">${usersCount}</div><div class="stat-label">Akun Civitas</div></div>
+        <div class="stat-card"><div class="stat-number">${commentsCount}</div><div class="stat-label">Total Komentar</div></div>
       </div>
       <br>
       
+      <div class="card fade-in" style="margin-bottom:24px">
+        <h3>➕ Tambah Kegiatan Baru (Admin Panel)</h3><br>
+        <form onsubmit="submitNewEventAdmin(event)">
+          <div class="form-group">
+            <label>Nama Kegiatan</label>
+            <input id="evt-name" class="form-control" placeholder="Contoh: Kajian Fiqih Kontemporer" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tanggal Pelaksanaan</label>
+              <input type="date" id="evt-date" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>Waktu Mulai</label>
+              <input type="time" id="evt-time" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tempat / Lokasi</label>
+              <input id="evt-location" class="form-control" placeholder="Contoh: Gedung Rektorat Lt. 2" required>
+            </div>
+            <div class="form-group">
+              <label>Kuota Maksimal Peserta</label>
+              <input type="number" id="evt-quota" class="form-control" placeholder="Contoh: 100" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Publikasikan Kegiatan →</button>
+        </form>
+      </div>
+
       <div class="card fade-in">
-        <h3>🗄️ Status Modul Basis Data</h3>
-        <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom: 16px;">Ikhtisar kesehatan koleksi data organisasi rohani kita secara real-time.</p>
+        <h3>🗄️ Status Modul Basis Data (Real-time)</h3>
+        <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom: 16px;">Tinjauan modular terhadap database real-time SIKRK.</p>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
                 <th>Nama Modul Utama</th>
                 <th>Volume Data</th>
-                <th>Sinkronisasi Terakhir</th>
                 <th>Status Servis</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td>Katalog Kegiatan</td>
-                <td>86 Acara</td>
-                <td>Hari ini, 09:00</td>
-                <td><span class="badge badge-success">Sehat</span></td>
+                <td>${eventsCount} Acara</td>
+                <td><span class="badge badge-success">Aktif</span></td>
+              </tr>
+              <tr>
+                <td>Pendaftaran Anggota</td>
+                <td>${registrationsCount} Entri</td>
+                <td><span class="badge badge-success">Aktif</span></td>
               </tr>
               <tr>
                 <td>Direktori Peserta</td>
-                <td>1.240 Akun</td>
-                <td>Hari ini, 09:00</td>
-                <td><span class="badge badge-success">Sehat</span></td>
+                <td>${usersCount} Akun</td>
+                <td><span class="badge badge-success">Aktif</span></td>
               </tr>
               <tr>
-                <td>Repositori Artikel</td>
-                <td>124 Postingan</td>
-                <td>Kemarin</td>
-                <td><span class="badge badge-success">Sehat</span></td>
-              </tr>
-              <tr>
-                <td>Bank Dokumentasi Multimedia</td>
-                <td>890 Berkas</td>
-                <td>2 hari yang lalu</td>
-                <td><span class="badge badge-warning">Mendekati Limit</span></td>
+                <td>Repositori Komentar</td>
+                <td>${commentsCount} Baris</td>
+                <td><span class="badge badge-success">Aktif</span></td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
       <br>
-      <a href="#" data-page="hak-akses" class="btn btn-outline">🔐 Konfigurasi Hak Akses Sistem →</a>`,
-    ),
+      <a href="#" data-page="status-pendaftaran" class="btn btn-outline">📊 Kelola Pendaftaran Masuk →</a>`,
+    );
+  },
 
-  "log-aktivitas": () =>
-    pg(
+  "log-aktivitas": () => {
+    const user = window.db.getCurrentUser();
+    if (!user || user.role !== "admin") {
+      return pg("Akses Ditolak", `<div class="card fade-in"><p>Maaf, halaman ini hanya dapat diakses oleh Admin SIKRK.</p></div>`);
+    }
+
+    const logs = window.db.getLogs();
+    const logItems = logs.map(l => `
+      <div class="log-item" style="border-bottom: 1px solid var(--border); padding: 12px 0; display: flex; flex-direction: column; gap: 4px;">
+        <div class="log-time" style="color: var(--text-muted); font-size: 0.8rem;">${l.time}</div>
+        <div class="log-user" style="font-weight:600; color: var(--gold-dark);">${l.user}</div>
+        <div class="log-action" style="font-size:0.9rem;">${l.action}</div>
+      </div>
+    `).join("");
+
+    return pg(
       "Riwayat Log Sistem",
       `
       <div class="card fade-in">
-        <h3>📋 Jejak Digital Organisasi</h3>
-        <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom: 20px;">Memantau setiap pergerakan yang dilakukan oleh staf, admin, dan otomatisasi bot sistem.</p>
-        
-        <div class="log-item">
-          <div class="log-time">Hari ini, 07:45</div>
-          <div class="log-user">Sistem Moderator</div>
-          <div class="log-action">Meloloskan komentar sdr. Hasan pada thread sholat malam</div>
-        </div>
-        <div class="log-item">
-          <div class="log-time">Hari ini, 07:30</div>
-          <div class="log-user">Rizki A. (Ketua)</div>
-          <div class="log-action">Membuka batch pendaftaran baru untuk relawan Bakti Sosial</div>
-        </div>
-        <div class="log-item">
-          <div class="log-time">Kemarin, 22:15</div>
-          <div class="log-user">Cron Bot</div>
-          <div class="log-action">Rutinitas pencadangan (backup) terselesaikan tanpa error (Size: 156 MB)</div>
-        </div>
-        <div class="log-item">
-          <div class="log-time">Kemarin, 18:00</div>
-          <div class="log-user">Aisyah R. (Media)</div>
-          <div class="log-action">Selesai mengunggah album foto Retreat Kerohanian (5 item)</div>
-        </div>
-        <div class="log-item">
-          <div class="log-time">Kemarin, 14:20</div>
-          <div class="log-user">Tim Admin</div>
-          <div class="log-action">Merevisi pamflet jadwal Kajian Subuh edisi bulan Juni</div>
-        </div>
-        <div class="log-item">
-          <div class="log-time">Lusa, 09:00</div>
-          <div class="log-user">Mail Service</div>
-          <div class="log-action">Menyebarkan broadcast 45 email pengingat kepada peserta retreat</div>
+        <h3>📋 Jejak Digital Organisasi (Real-time)</h3>
+        <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom: 20px;">Melacak aktivitas login, pendaftaran, persetujuan komentar, dan backup secara real-time.</p>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          ${logItems || "<p style='color:var(--text-muted); text-align:center;'>Belum ada log aktivitas.</p>"}
         </div>
       </div>
       <br>
       <a href="#" data-page="audit-trail" class="btn btn-primary">🔍 Gali Data Audit Mendalam →</a>`,
-    ),
+    );
+  },
 
   "backup-restore": () =>
     pg(

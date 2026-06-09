@@ -1,4 +1,36 @@
 /* Pages L3-L6 */
+window.submitEventRegistration = function(e) {
+  e.preventDefault();
+  const name = document.getElementById("reg-form-name").value;
+  const nim = document.getElementById("reg-form-nim").value;
+  const prodi = document.getElementById("reg-form-prodi").value;
+  const whatsapp = document.getElementById("reg-form-whatsapp").value;
+  const eventSelect = document.getElementById("reg-form-event");
+  const eventId = eventSelect.value;
+  const notes = document.getElementById("reg-form-notes").value;
+
+  if (!eventId) {
+    alert("Silakan pilih kegiatan terlebih dahulu.");
+    return;
+  }
+
+  const res = window.db.registerForEvent(eventId, name, nim, prodi, whatsapp, notes);
+  if (res.success) {
+    alert("Pendaftaran berhasil dikirim! Silakan tunggu konfirmasi panitia.");
+    navigateTo("status-pendaftaran");
+  } else {
+    alert(res.message);
+  }
+};
+
+window.changeRegStatus = function(id, status) {
+  const res = window.db.updateRegistrationStatus(id, status);
+  if (res.success) {
+    alert(`Status pendaftaran berhasil diubah menjadi: ${status}`);
+    navigateTo("status-pendaftaran");
+  }
+};
+
 const pages2 = {
   "sejarah-struktur": () =>
     pg(
@@ -180,51 +212,54 @@ const pages2 = {
       <a href="#" data-page="artikel-rohani" class="btn btn-primary">📝 Jelajahi Tulisan & Artikel Kami →</a>`,
     ),
 
-  "pendaftaran-kegiatan": () =>
-    pg(
+  "pendaftaran-kegiatan": () => {
+    const user = window.db.getCurrentUser() || {};
+    const events = window.db.getKegiatan();
+    const eventOptions = events.map(e => `<option value="${e.id}">${e.name} (${e.status})</option>`).join("");
+    return pg(
       "Pendaftaran Kegiatan",
       `
       <div class="card fade-in">
         <h3>📝 Formulir Keikutsertaan</h3><br>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Nama Lengkap Sesuai KTM</label>
-            <input class="form-control" placeholder="Contoh: Budi Santoso">
+        <form onsubmit="submitEventRegistration(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nama Lengkap Sesuai KTM</label>
+              <input id="reg-form-name" class="form-control" placeholder="Contoh: Budi Santoso" value="${user.name || ""}" required>
+            </div>
+            <div class="form-group">
+              <label>NIM (Nomor Induk Mahasiswa)</label>
+              <input id="reg-form-nim" class="form-control" placeholder="Contoh: 102345678" value="${user.nim || ""}" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Fakultas / Program Studi</label>
+              <input id="reg-form-prodi" class="form-control" placeholder="Contoh: Fakultas Teknik / Informatika" value="${user.prodi || ""}" required>
+            </div>
+            <div class="form-group">
+              <label>Nomor WhatsApp Aktif</label>
+              <input id="reg-form-whatsapp" class="form-control" placeholder="08xx-xxxx-xxxx" value="${user.whatsapp || ""}" required>
+            </div>
           </div>
           <div class="form-group">
-            <label>NIM (Nomor Induk Mahasiswa)</label>
-            <input class="form-control" placeholder="Contoh: 102345678">
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Fakultas / Program Studi</label>
-            <input class="form-control" placeholder="Contoh: Fakultas Teknik / Informatika">
+            <label>Kegiatan yang Ingin Diikuti</label>
+            <select id="reg-form-event" class="form-control" required>
+              <option value="">— Pilih Kegiatan Tersedia —</option>
+              ${eventOptions}
+            </select>
           </div>
           <div class="form-group">
-            <label>Nomor WhatsApp Aktif</label>
-            <input class="form-control" placeholder="08xx-xxxx-xxxx">
+            <label>Apa harapan atau motivasimu mengikuti kegiatan ini?</label>
+            <textarea id="reg-form-notes" class="form-control" placeholder="Ceritakan singkat motivasimu..." required></textarea>
           </div>
-        </div>
-        <div class="form-group">
-          <label>Kegiatan yang Ingin Diikuti</label>
-          <select class="form-control">
-            <option>— Pilih Kegiatan Tersedia —</option>
-            <option>Kajian Rutin Subuh Berjamaah</option>
-            <option>Retreat Kerohanian Semester Genap</option>
-            <option>Doa Bersama Masa Ujian</option>
-            <option>Bakti Sosial Panti Asuhan</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Apa harapan atau motivasimu mengikuti kegiatan ini?</label>
-          <textarea class="form-control" placeholder="Ceritakan singkat motivasimu..."></textarea>
-        </div>
-        <button class="btn btn-primary" onclick="alert('Alhamdulillah, formulir pendaftaranmu sudah kami terima! Silakan tunggu konfirmasi panitia lewat WhatsApp.')">Kirim Formulir →</button>
+          <button type="submit" class="btn btn-primary">Kirim Formulir →</button>
+        </form>
       </div>
       <br>
       <a href="#" data-page="status-pendaftaran" class="btn btn-outline">📊 Cek Status Konfirmasi</a>`,
-    ),
+    );
+  },
 
   "unggah-dokumentasi": () =>
     pg(
@@ -301,47 +336,83 @@ const pages2 = {
       </div>`,
     ),
 
-  "status-pendaftaran": () =>
-    pg(
+  "status-pendaftaran": () => {
+    const user = window.db.getCurrentUser();
+    if (!user) {
+      return pg(
+        "Status Pendaftaran",
+        `
+        <div class="card fade-in text-center" style="padding: 50px 20px;">
+          <h3>Akses Terbatas</h3>
+          <p style="color:var(--text-muted); margin-bottom: 20px;">Silakan login terlebih dahulu untuk melihat status pendaftaran Anda.</p>
+          <a href="#" data-page="login" class="btn btn-primary">Masuk / Login</a>
+        </div>
+        `
+      );
+    }
+
+    const regs = window.db.getPendaftaran();
+    const userRegs = user.role === "admin" ? regs : regs.filter(r => r.userEmail === user.email);
+    
+    let tableRows = "";
+    if (userRegs.length === 0) {
+      tableRows = `<tr><td colspan="4" style="text-align:center;">Belum ada riwayat pendaftaran.</td></tr>`;
+    } else {
+      tableRows = userRegs.map(r => {
+        let badgeClass = "badge-info";
+        if (r.status === "Terkonfirmasi") badgeClass = "badge-success";
+        if (r.status === "Ditolak") badgeClass = "badge-danger";
+        if (r.status === "Dalam Antrean") badgeClass = "badge-warning";
+        
+        return `
+          <tr>
+            <td>
+              <strong>${r.eventName}</strong>
+              ${user.role === "admin" ? `<br><small style="color:var(--text-muted)">Oleh: ${r.userName} (${r.userNim})</small>` : ""}
+            </td>
+            <td>${r.date}</td>
+            <td><span class="badge ${badgeClass}">${r.status}</span></td>
+            <td>
+              ${user.role === "admin" ? `
+                <div style="display:flex; gap: 5px;">
+                  <button class="btn btn-sm btn-primary" onclick="changeRegStatus('${r.id}', 'Terkonfirmasi')">Terima</button>
+                  <button class="btn btn-sm btn-outline" style="border-color:red; color:red;" onclick="changeRegStatus('${r.id}', 'Ditolak')">Tolak</button>
+                </div>
+              ` : r.status === "Terkonfirmasi" ? `
+                <a href="#" data-page="dashboard-peserta" class="btn btn-sm btn-outline">Masuk Dashboard</a>
+              ` : `
+                <span style="color:var(--text-muted); font-size:0.85rem;">Menunggu verifikasi</span>
+              `}
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    return pg(
       "Status Pendaftaran",
       `
       <div class="card fade-in" style="margin-bottom:20px">
-        <h3>📊 Pantau Riwayat Pendaftaranmu</h3>
-        <p style="color:var(--text-muted); font-size:0.9rem;">Di sini kamu bisa mengecek apakah formulirmu sudah divalidasi panitia.</p>
+        <h3>📊 Pantau Riwayat Pendaftaran ${user.role === "admin" ? "Seluruh Anggota" : "Anda"}</h3>
+        <p style="color:var(--text-muted); font-size:0.9rem;">Status sinkronisasi dengan database real-time SIKRK.</p>
       </div>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Nama Kegiatan</th>
+              <th>${user.role === "admin" ? "Kegiatan / Pendaftar" : "Nama Kegiatan"}</th>
               <th>Waktu Mendaftar</th>
               <th>Status Saat Ini</th>
               <th>Tindakan Lanjutan</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>Kajian Rutin Subuh Berjamaah</td>
-              <td>1 Jun 2026, 08:15</td>
-              <td><span class="badge badge-success">Terkonfirmasi</span></td>
-              <td><a href="#" data-page="dashboard-peserta" class="btn btn-sm btn-outline">Masuk Dashboard</a></td>
-            </tr>
-            <tr>
-              <td>Retreat Kerohanian Semester</td>
-              <td>5 Jun 2026, 14:30</td>
-              <td><span class="badge badge-warning">Dalam Antrean</span></td>
-              <td><span style="color:var(--text-muted); font-size:0.85rem;">Menunggu verifikasi admin</span></td>
-            </tr>
-            <tr>
-              <td>Bakti Sosial Panti Asuhan</td>
-              <td>8 Jun 2026, 20:00</td>
-              <td><span class="badge badge-info">Sedang Ditinjau</span></td>
-              <td><span style="color:var(--text-muted); font-size:0.85rem;">Menunggu seleksi kuota</span></td>
-            </tr>
+            ${tableRows}
           </tbody>
         </table>
       </div>`,
-    ),
+    );
+  },
 
   "laporan-kegiatan": () =>
     pg(
