@@ -116,56 +116,184 @@ const pages1 = {
     ),
 
   "jadwal-kegiatan": () => {
-    const events = window.db.getKegiatan();
-    const rows = events.map(e => {
-      let badgeClass = "badge-success";
-      if (e.status === "Segera") badgeClass = "badge-warning";
-      if (e.status === "Pendaftaran") badgeClass = "badge-info";
-      if (e.status === "Penuh") badgeClass = "badge-danger";
-      
-      return `
-        <tr>
-          <td><strong>${e.name}</strong></td>
-          <td>${e.date}</td>
-          <td>${e.time} WIB</td>
-          <td>${e.location}</td>
-          <td><span class="badge ${badgeClass}">${e.status}</span></td>
-        </tr>
-      `;
-    }).join("");
+    // Define the component render function if not already globally defined
+    if (!window.renderEventsPage) {
+      window.selectedFilter = "Semua";
+      window.searchQuery = "";
+      window.viewType = "card"; // 'card' or 'table'
+
+      window.renderEventsPage = () => {
+        const events = window.db.getKegiatan();
+        const filtered = events.filter(e => {
+          const matchesSearch = e.name.toLowerCase().includes(window.searchQuery.toLowerCase()) ||
+                                e.location.toLowerCase().includes(window.searchQuery.toLowerCase());
+          
+          if (window.selectedFilter === "Semua") return matchesSearch;
+          return e.status === window.selectedFilter && matchesSearch;
+        });
+
+        // Generate Cards View
+        const cardsHTML = filtered.map(e => {
+          let badgeClass = "badge-success";
+          if (e.status === "Segera") badgeClass = "badge-warning";
+          if (e.status === "Pendaftaran") badgeClass = "badge-info";
+          if (e.status === "Penuh") badgeClass = "badge-danger";
+
+          const percent = Math.min(Math.round((e.registered / e.quota) * 100), 100);
+          
+          let emoji = "🕌";
+          if (e.id.includes("retreat")) emoji = "⛰️";
+          if (e.id.includes("doa")) emoji = "🤲";
+          if (e.id.includes("bakti")) emoji = "🎁";
+          if (e.id.includes("seminar")) emoji = "💻";
+          
+          return `
+            <div class="card event-card fade-in visible">
+              <div class="event-card-header">
+                <div class="event-icon-circle">${emoji}</div>
+                <span class="badge ${badgeClass}">${e.status}</span>
+              </div>
+              <h3 class="event-card-title">${e.name}</h3>
+              <div class="event-meta-info">
+                <p><strong>📅 Tanggal:</strong> ${e.date}</p>
+                <p><strong>🕐 Waktu:</strong> ${e.time} WIB</p>
+                <p><strong>📍 Lokasi:</strong> ${e.location}</p>
+              </div>
+              <div class="quota-container">
+                <div class="quota-header">
+                  <span>Partisipasi</span>
+                  <span>${e.registered} / ${e.quota} Terdaftar (${percent}%)</span>
+                </div>
+                <div class="quota-bar-bg">
+                  <div class="quota-bar-fill" style="width: ${percent}%"></div>
+                </div>
+              </div>
+              <div class="event-card-actions">
+                <button class="btn btn-sm btn-outline" onclick="window.selectEvent('${e.id}', 'detail-kegiatan')">Lihat Detail</button>
+                ${e.status !== 'Penuh' ? `
+                  <button class="btn btn-sm btn-primary" onclick="window.selectEvent('${e.id}', 'pendaftaran-kegiatan')">Daftar</button>
+                ` : `
+                  <button class="btn btn-sm btn-outline" disabled style="cursor:not-allowed;">Penuh</button>
+                `}
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        // Generate Table View Rows
+        const rowsHTML = filtered.map(e => {
+          let badgeClass = "badge-success";
+          if (e.status === "Segera") badgeClass = "badge-warning";
+          if (e.status === "Pendaftaran") badgeClass = "badge-info";
+          if (e.status === "Penuh") badgeClass = "badge-danger";
+
+          return `
+            <tr>
+              <td><strong>${e.name}</strong></td>
+              <td>${e.date}</td>
+              <td>${e.time} WIB</td>
+              <td>${e.location}</td>
+              <td><span class="badge ${badgeClass}">${e.status}</span></td>
+              <td>
+                <div style="display:flex; gap: 8px;">
+                  <button class="btn btn-sm btn-outline" style="padding: 4px 12px; font-size:0.75rem;" onclick="window.selectEvent('${e.id}', 'detail-kegiatan')">Detail</button>
+                  ${e.status !== 'Penuh' ? `
+                    <button class="btn btn-sm btn-primary" style="padding: 4px 12px; font-size:0.75rem;" onclick="window.selectEvent('${e.id}', 'pendaftaran-kegiatan')">Daftar</button>
+                  ` : ''}
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join("");
+
+        const container = document.getElementById("events-display-container");
+        if (container) {
+          if (window.viewType === "card") {
+            container.innerHTML = `<div class="card-grid">${cardsHTML || "<p style='grid-column: 1/-1; text-align:center; color:var(--text-muted); padding: 40px;'>Tidak ada kegiatan yang cocok.</p>"}</div>`;
+          } else {
+            container.innerHTML = `
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Nama Kegiatan</th>
+                      <th>Tanggal Pelaksanaan</th>
+                      <th>Waktu</th>
+                      <th>Lokasi</th>
+                      <th>Status</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${rowsHTML || "<tr><td colspan='6' style='text-align:center;'>Tidak ada kegiatan yang cocok.</td></tr>"}
+                  </tbody>
+                </table>
+              </div>
+            `;
+          }
+        }
+      };
+
+      // Handler to select event and navigate
+      window.selectEvent = (eventId, targetPage) => {
+        window.selectedEventId = eventId;
+        navigateTo(targetPage);
+      };
+
+      window.setFilter = (filter) => {
+        window.selectedFilter = filter;
+        document.querySelectorAll(".filter-tag").forEach(btn => {
+          btn.classList.toggle("active", btn.dataset.filter === filter);
+        });
+        window.renderEventsPage();
+      };
+
+      window.toggleViewType = (type) => {
+        window.viewType = type;
+        document.querySelectorAll(".view-toggle-btn").forEach(btn => {
+          btn.classList.toggle("active", btn.dataset.view === type);
+        });
+        window.renderEventsPage();
+      };
+
+      window.handleSearchInput = (e) => {
+        window.searchQuery = e.target.value;
+        window.renderEventsPage();
+      };
+    }
+
+    // Trigger rendering after injecting container
+    setTimeout(() => {
+      window.renderEventsPage();
+    }, 50);
 
     return pg(
       "Jadwal Kegiatan",
       `
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Nama Kegiatan</th>
-              <th>Tanggal Pelaksanaan</th>
-              <th>Waktu</th>
-              <th>Lokasi</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows}
-          </tbody>
-        </table>
+      <div class="events-controls-row">
+        <div class="search-box" style="margin: 0; max-width: 350px;">
+          <input class="form-control" placeholder="🔍 Cari nama atau lokasi..." value="${window.searchQuery || ""}" oninput="window.handleSearchInput(event)">
+        </div>
+        
+        <div class="events-filters">
+          <button class="tab-btn filter-tag ${window.selectedFilter === "Semua" ? "active" : ""}" data-filter="Semua" onclick="window.setFilter('Semua')">Semua</button>
+          <button class="tab-btn filter-tag ${window.selectedFilter === "Terbuka" ? "active" : ""}" data-filter="Terbuka" onclick="window.setFilter('Terbuka')">Terbuka</button>
+          <button class="tab-btn filter-tag ${window.selectedFilter === "Pendaftaran" ? "active" : ""}" data-filter="Pendaftaran" onclick="window.setFilter('Pendaftaran')">Pendaftaran</button>
+          <button class="tab-btn filter-tag ${window.selectedFilter === "Segera" ? "active" : ""}" data-filter="Segera" onclick="window.setFilter('Segera')">Segera</button>
+          <button class="tab-btn filter-tag ${window.selectedFilter === "Penuh" ? "active" : ""}" data-filter="Penuh" onclick="window.setFilter('Penuh')">Penuh</button>
+        </div>
+
+        <div class="view-switchers" style="display:flex; gap: 8px;">
+          <button class="tab-btn view-toggle-btn ${window.viewType === "card" ? "active" : ""}" data-view="card" onclick="window.toggleViewType('card')" title="Tampilan Kartu">🎴 Kartu</button>
+          <button class="tab-btn view-toggle-btn ${window.viewType === "table" ? "active" : ""}" data-view="table" onclick="window.toggleViewType('table')" title="Tampilan Tabel">📋 Tabel</button>
+        </div>
       </div>
+      
       <br>
-      <div class="card-grid">
-        <div class="card">
-          <h3>📋 Detail Kegiatan</h3>
-          <p>Baca rincian acara, pemateri, dan perlengkapan yang dibutuhkan.</p><br>
-          <a href="#" data-page="detail-kegiatan" class="btn btn-sm btn-primary">Buka →</a>
-        </div>
-        <div class="card">
-          <h3>✍️ Pendaftaran</h3>
-          <p>Tertarik ikut? Daftarkan dirimu segera sebelum kuota penuh.</p><br>
-          <a href="#" data-page="pendaftaran-kegiatan" class="btn btn-sm btn-primary">Daftar →</a>
-        </div>
-      </div>`,
+      <div id="events-display-container">
+        <!-- Will be loaded dynamically -->
+      </div>
+      `
     );
   },
 

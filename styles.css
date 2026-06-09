@@ -477,7 +477,7 @@ img {
 .card h3 {
   font-size: 1.15rem;
   margin-bottom: 10px;
-  color: var(--white);
+  color: var(--text);
 }
 .card p {
   color: var(--text-muted);
@@ -1284,3 +1284,108 @@ select.form-control {
   border-top: 1px solid var(--border);
   margin: 6px 0;
 }
+
+/* ===== JADWAL KEGIATAN & EVENTS DYNAMIC VIEW ===== */
+.events-controls-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.events-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.filter-tag {
+  padding: 8px 18px;
+  font-size: 0.85rem;
+}
+.filter-tag.active {
+  background: var(--gold-dark) !important;
+  color: var(--white) !important;
+  border-color: var(--gold-dark) !important;
+}
+.view-toggle-btn {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+}
+.view-toggle-btn.active {
+  background: var(--gold-dark) !important;
+  color: var(--white) !important;
+  border-color: var(--gold-dark) !important;
+}
+.event-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.event-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.event-icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2);
+}
+.event-card-title {
+  font-size: 1.25rem;
+  color: var(--text) !important;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+.event-meta-info {
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.event-meta-info p {
+  color: var(--text-muted);
+}
+.quota-container {
+  margin-top: auto;
+  margin-bottom: 20px;
+}
+.quota-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.quota-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: rgba(14, 165, 233, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.quota-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--emerald));
+  border-radius: 10px;
+  transition: width 0.5s ease;
+}
+.event-card-actions {
+  display: flex;
+  gap: 10px;
+}
+.event-card-actions button, 
+.event-card-actions a {
+  flex: 1;
+  justify-content: center;
+}
+

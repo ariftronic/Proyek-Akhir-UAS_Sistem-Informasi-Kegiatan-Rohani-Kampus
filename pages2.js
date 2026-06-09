@@ -88,44 +88,130 @@ const pages2 = {
       <a href="#" data-page="profil-pengurus" class="btn btn-primary">Lihat Detail Pengurus →</a>`,
     ),
 
-  "detail-kegiatan": () =>
-    pg(
+  "detail-kegiatan": () => {
+    const events = window.db.getKegiatan();
+    const eventId = window.selectedEventId || (events[0] ? events[0].id : null);
+    const e = events.find(item => item.id === eventId);
+
+    if (!e) {
+      return pg(
+        "Detail Kegiatan",
+        `
+        <div class="card fade-in text-center" style="padding: 50px 20px;">
+          <h3>Kegiatan Tidak Ditemukan</h3>
+          <p style="color:var(--text-muted); margin-bottom: 20px;">Pilihlah kegiatan yang valid dari halaman jadwal.</p>
+          <a href="#" data-page="jadwal-kegiatan" class="btn btn-primary">Kembali ke Jadwal</a>
+        </div>
+        `
+      );
+    }
+
+    const percent = Math.min(Math.round((e.registered / e.quota) * 100), 100);
+    let badgeClass = "badge-success";
+    if (e.status === "Segera") badgeClass = "badge-warning";
+    if (e.status === "Pendaftaran") badgeClass = "badge-info";
+    if (e.status === "Penuh") badgeClass = "badge-danger";
+
+    let emoji = "🕌";
+    if (e.id.includes("retreat")) emoji = "⛰️";
+    if (e.id.includes("doa")) emoji = "🤲";
+    if (e.id.includes("bakti")) emoji = "🎁";
+    if (e.id.includes("seminar")) emoji = "💻";
+
+    // Fallback descriptions
+    const EVENT_META = {
+      "kajian-subuh": {
+        speaker: "Ustadz Dr. H. Ahmad Fauzi, M.Ag.",
+        description: "Kajian subuh rutin untuk membina keimanan dan akhlak mahasiswa, membedah kitab-kitab tafsir kontemporer dan tanya jawab keagamaan interaktif.",
+        timeDetail: "05:00 - 06:30 WIB"
+      },
+      "retreat-maba": {
+        speaker: "Pdt. Samuel Hartono, M.Th. & Tim",
+        description: "Program pembinaan mental dan spiritual bagi mahasiswa baru untuk mempererat tali persaudaraan dan memperkuat dasar iman dalam dunia kampus.",
+        timeDetail: "08:00 WIB - Selesai"
+      },
+      "doa-bersama": {
+        speaker: "Tim Kerohanian Kampus SIKRK",
+        description: "Mari heningkan cipta dan berdoa bersama memohon kelancaran, kemudahan, serta kesuksesan dalam menghadapi Ujian Akhir Semester (UAS).",
+        timeDetail: "16:00 - 18:00 WIB"
+      },
+      "bakti-sosial": {
+        speaker: "Divisi Pengabdian Masyarakat SIKRK",
+        description: "Bentuk kepedulian nyata sivitas akademika kampus dengan berkunjung, berbagi keceriaan, memberikan edukasi serta santunan ke panti asuhan.",
+        timeDetail: "07:00 WIB - Selesai"
+      },
+      "seminar-etika": {
+        speaker: "Prof. Dr. Ir. Hermawan, M.T. (Pakar Etika Digital)",
+        description: "Seminar interaktif mengupas cara bersosial media secara sehat, menangkal hoaks, dan menjaga integritas diri sebagai akademisi di era digital.",
+        timeDetail: "09:00 - 12:00 WIB"
+      }
+    };
+
+    const meta = EVENT_META[e.id] || {
+      speaker: "Pemateri / Panitia Internal",
+      description: "Mari ikut serta dalam kegiatan bermanfaat ini untuk memperkuat kebersamaan dan kerohanian sivitas akademika kampus.",
+      timeDetail: `${e.time} WIB - Selesai`
+    };
+
+    return pg(
       "Detail Kegiatan",
       `
       <div class="card fade-in" style="margin-bottom:24px">
-        <span class="badge badge-success">Pendaftaran Masih Dibuka</span>
-        <h3 style="margin-top:12px">🕌 Kajian Rutin Subuh Berjamaah — Edisi Bulan Ini</h3>
-        <p>Mari awali pagi dengan keberkahan. Kajian rutin setiap Jumat subuh kali ini akan membedah tafsir Al-Quran surah Al-Kahfi dan hadits pilihan bersama Ustadz kampus tercinta.</p>
-        <br>
-        <div class="form-row">
-          <div><strong>📅 Tanggal:</strong> Setiap Jumat, Juni 2026</div>
-          <div><strong>🕐 Waktu:</strong> 05:00 - 06:30 WIB</div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+          <div style="display:flex; gap:16px; align-items:center;">
+            <div class="event-icon-circle" style="width: 60px; height: 60px; font-size: 1.8rem; background: linear-gradient(135deg, var(--gold), var(--gold-dark)); border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.2); color:white;">${emoji}</div>
+            <div>
+              <span class="badge ${badgeClass}">${e.status}</span>
+              <h2 style="margin-top:4px; font-size: 1.6rem; color: var(--text);">${e.name}</h2>
+            </div>
+          </div>
+          <a href="#" data-page="jadwal-kegiatan" class="btn btn-sm btn-outline">← Kembali ke Jadwal</a>
         </div>
-        <div class="form-row">
-          <div><strong>📍 Lokasi:</strong> Masjid Utama Kampus</div>
-          <div><strong>👥 Sisa Kuota:</strong> 45 dari 150 peserta</div>
+        
+        <hr class="glow-line" style="margin: 20px 0;">
+        
+        <p style="font-size:1.05rem; line-height: 1.8; margin-bottom: 20px; color:var(--text);">${meta.description}</p>
+        
+        <div class="event-details-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
+          <div style="background:var(--bg-dark); padding: 16px; border-radius: var(--radius); border: 1px solid var(--border)">
+            <span style="color:var(--text-muted); font-size: 0.85rem; display:block;">📅 TANGGAL</span>
+            <strong style="color:var(--text);">${e.date}</strong>
+          </div>
+          <div style="background:var(--bg-dark); padding: 16px; border-radius: var(--radius); border: 1px solid var(--border)">
+            <span style="color:var(--text-muted); font-size: 0.85rem; display:block;">🕐 WAKTU</span>
+            <strong style="color:var(--text);">${meta.timeDetail}</strong>
+          </div>
+          <div style="background:var(--bg-dark); padding: 16px; border-radius: var(--radius); border: 1px solid var(--border)">
+            <span style="color:var(--text-muted); font-size: 0.85rem; display:block;">📍 LOKASI</span>
+            <strong style="color:var(--text);">${e.location}</strong>
+          </div>
+          <div style="background:var(--bg-dark); padding: 16px; border-radius: var(--radius); border: 1px solid var(--border)">
+            <span style="color:var(--text-muted); font-size: 0.85rem; display:block;">🗣️ PEMATERI / FASILITATOR</span>
+            <strong style="color:var(--text);">${meta.speaker}</strong>
+          </div>
+        </div>
+
+        <div class="quota-container" style="margin-bottom: 24px;">
+          <div class="quota-header">
+            <span>Ketersediaan Kuota Peserta</span>
+            <span><strong style="color:var(--text);">${e.registered}</strong> dari <strong style="color:var(--text);">${e.quota}</strong> Terdaftar (${percent}%)</span>
+          </div>
+          <div class="quota-bar-bg" style="height: 8px;">
+            <div class="quota-bar-fill" style="width: ${percent}%; height: 100%;"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap: 12px; flex-wrap:wrap;">
+          ${e.status !== "Penuh" ? `
+            <a href="#" onclick="window.selectedEventId='${e.id}'; navigateTo('pendaftaran-kegiatan')" class="btn btn-primary">Daftar Sekarang →</a>
+          ` : `
+            <button class="btn btn-primary" disabled style="cursor:not-allowed; opacity: 0.6;">Kuota Sudah Penuh</button>
+          `}
         </div>
       </div>
-      
-      <div class="card fade-in" style="margin-bottom:24px">
-        <span class="badge badge-warning">Hampir Penuh</span>
-        <h3 style="margin-top:12px">⛰️ Retreat Kerohanian Semester Genap</h3>
-        <p>Bebaskan pikiran sejenak dari hiruk-pikuk tugas kuliah. Kegiatan penguatan spiritual selama 3 hari 2 malam di alam terbuka, diisi dengan materi character building dan renungan malam.</p>
-        <br>
-        <div class="form-row">
-          <div><strong>📅 Tanggal:</strong> 20-22 Juni 2026</div>
-          <div><strong>📍 Lokasi:</strong> Wisma Alam Asri, Puncak</div>
-        </div>
-      </div>
-      
-      <div class="card-grid">
-        <div class="card">
-          <h3>✍️ Tertarik Ikut?</h3>
-          <p>Pastikan kamu sudah mendaftar agar kami bisa menyiapkan konsumsi dan fasilitas untukmu.</p><br>
-          <a href="#" data-page="pendaftaran-kegiatan" class="btn btn-sm btn-primary">Daftar Sekarang →</a>
-        </div>
-      </div>`,
-    ),
+      `
+    );
+  },
 
   "album-foto": () =>
     pg(
@@ -215,7 +301,10 @@ const pages2 = {
   "pendaftaran-kegiatan": () => {
     const user = window.db.getCurrentUser() || {};
     const events = window.db.getKegiatan();
-    const eventOptions = events.map(e => `<option value="${e.id}">${e.name} (${e.status})</option>`).join("");
+    const eventOptions = events.map(e => {
+      const selected = (window.selectedEventId === e.id) ? "selected" : "";
+      return `<option value="${e.id}" ${selected}>${e.name} (${e.status})</option>`;
+    }).join("");
     return pg(
       "Pendaftaran Kegiatan",
       `
