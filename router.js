@@ -152,6 +152,14 @@ function renderBreadcrumb(pageId) {
 
 function navigateTo(pageId) {
   if (!LAYER_MAP[pageId] && pageId !== "beranda") pageId = "beranda";
+
+  // Close mobile navigation menu on any navigation
+  const navMenu = document.getElementById("nav-menu");
+  const navToggle = document.getElementById("nav-toggle");
+  if (navMenu) navMenu.classList.remove("open");
+  if (navToggle) navToggle.classList.remove("open");
+  document.body.classList.remove("menu-open");
+
   const content = document.getElementById("app-content");
   content.style.opacity = "0";
   setTimeout(() => {
@@ -216,7 +224,8 @@ function initApp() {
   
   navToggle.addEventListener("click", () => {
     navToggle.classList.toggle("open");
-    navMenu.classList.toggle("open");
+    const isOpen = navMenu.classList.toggle("open");
+    document.body.classList.toggle("menu-open", isOpen);
   });
 
   // Mobile dropdowns
@@ -236,6 +245,7 @@ function initApp() {
       navigateTo(el.dataset.page);
       navMenu.classList.remove("open");
       navToggle.classList.remove("open");
+      document.body.classList.remove("menu-open");
     });
   });
 
