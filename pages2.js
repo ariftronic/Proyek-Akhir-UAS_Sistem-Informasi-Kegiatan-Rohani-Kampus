@@ -31,6 +31,19 @@ window.changeRegStatus = function(id, status) {
   }
 };
 
+window.handleArticleSearch = function(e) {
+  const query = e.target.value.toLowerCase();
+  document.querySelectorAll(".card-grid .card").forEach(card => {
+    const title = card.querySelector("h3")?.textContent.toLowerCase() || "";
+    const desc = card.querySelector("p")?.textContent.toLowerCase() || "";
+    if (title.includes(query) || desc.includes(query)) {
+      card.style.display = "block";
+    } else {
+      card.style.display = "none";
+    }
+  });
+};
+
 const pages2 = {
   "sejarah-struktur": () =>
     pg(
@@ -390,7 +403,7 @@ const pages2 = {
       "Artikel Rohani",
       `
       <div class="search-box">
-        <input class="form-control" placeholder="🔍 Cari judul bacaan, ustadz, atau topik...">
+        <input class="form-control" placeholder="🔍 Cari judul bacaan, ustadz, atau topik..." oninput="window.handleArticleSearch(event)">
         <button class="btn btn-primary btn-sm">Cari</button>
       </div>
       <div class="card-grid">

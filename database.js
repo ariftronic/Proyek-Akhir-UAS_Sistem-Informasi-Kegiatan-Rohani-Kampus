@@ -257,7 +257,8 @@ class SIKRKDatabase {
 
   login(email, password) {
     this.loadData();
-    const user = this.users.find(u => u.email === email && u.password === password);
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = this.users.find(u => u.email.trim().toLowerCase() === normalizedEmail && u.password === password);
     if (user) {
       this.currentUser = { ...user };
       delete this.currentUser.password; // Don't store password in session
@@ -284,11 +285,12 @@ class SIKRKDatabase {
 
   register(name, email, password, nim, prodi, whatsapp) {
     this.loadData();
-    if (this.users.some(u => u.email === email)) {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (this.users.some(u => u.email.trim().toLowerCase() === normalizedEmail)) {
       return { success: false, message: "Email sudah terdaftar." };
     }
     const newUser = {
-      email,
+      email: normalizedEmail,
       password,
       role: "anggota",
       name,
@@ -366,6 +368,10 @@ class SIKRKDatabase {
     const event = this.kegiatan.find(e => e.id === eventId);
     if (!event) return { success: false, message: "Kegiatan tidak ditemukan." };
 
+    if (event.registered >= event.quota) {
+      return { success: false, message: "Pendaftaran gagal. Kuota kegiatan ini sudah penuh!" };
+    }
+
     const user = this.getCurrentUser();
     const email = user ? user.email : "guest@sikrk.ac.id";
 
@@ -394,6 +400,9 @@ class SIKRKDatabase {
 
     // Increment registered count for the event
     event.registered = (event.registered || 0) + 1;
+    if (event.registered >= event.quota) {
+      event.status = "Penuh";
+    }
     this.saveData("kegiatan");
 
     this.addLog(name, `Mendaftar untuk kegiatan "${event.name}"`);
@@ -405,8 +414,30 @@ class SIKRKDatabase {
     const reg = this.pendaftaran.find(p => p.id === id);
     if (!reg) return { success: false, message: "Pendaftaran tidak ditemukan." };
 
+    const oldStatus = reg.status;
     reg.status = status;
     this.saveData("pendaftaran");
+
+    const event = this.kegiatan.find(e => e.id === reg.eventId);
+
+    // Adjust event registered count if registration is rejected/canceled
+    if ((status === "Ditolak" || status === "Dibatalkan") && oldStatus !== "Ditolak" && oldStatus !== "Dibatalkan") {
+      if (event) {
+        event.registered = Math.max(0, (event.registered || 0) - 1);
+        if (event.registered < event.quota && event.status === "Penuh") {
+          event.status = "Terbuka";
+        }
+        this.saveData("kegiatan");
+      }
+    } else if (status === "Terkonfirmasi" && oldStatus !== "Terkonfirmasi" && (oldStatus === "Ditolak" || oldStatus === "Dibatalkan")) {
+      if (event) {
+        event.registered = (event.registered || 0) + 1;
+        if (event.registered >= event.quota) {
+          event.status = "Penuh";
+        }
+        this.saveData("kegiatan");
+      }
+    }
 
     const user = this.getCurrentUser();
     this.addLog(user ? user.name : "Admin", `Mengubah status pendaftaran ${reg.userName} untuk "${reg.eventName}" menjadi: ${status}`);

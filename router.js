@@ -153,6 +153,13 @@ function renderBreadcrumb(pageId) {
 function navigateTo(pageId) {
   if (!LAYER_MAP[pageId] && pageId !== "beranda") pageId = "beranda";
 
+  // Update document title for better SEO & UX
+  if (LAYER_MAP[pageId]) {
+    document.title = `${LAYER_MAP[pageId].title} — SIKRK`;
+  } else {
+    document.title = "SIKRK — Sistem Informasi Kegiatan Rohani Kampus";
+  }
+
   // Close mobile navigation menu on any navigation
   const navMenu = document.getElementById("nav-menu");
   const navToggle = document.getElementById("nav-toggle");
